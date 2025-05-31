@@ -19,12 +19,22 @@ app.use('/api', router);
 
 app.use(logRequest); // Log all requests
 
-app.use("*", (req, res) => {
-    res.status(404).json({
-        message: 'Route Not Found',
-        success: false,
-        data: []
-    });
+app.use((err: any, req: any, res: any, next: any) => {
+    if (err.message && err.message.includes('pathToRegexpError')) {
+        logger.error('Route parsing error:', {
+            error: err.message,
+            path: req.path,
+            method: req.method,
+            originalUrl: req.originalUrl
+        });
+
+        return res.status(400).json({
+            error: 'Invalid route pattern',
+            message: 'The requested URL contains invalid characters'
+        });
+    }
+
+    next(err);
 });
 
 // Example route
