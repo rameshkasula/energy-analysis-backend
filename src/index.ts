@@ -42,6 +42,7 @@ app.get('/', (req, res) => {
     res.status(200).json({
         message: 'Energy Analysis API is running',
         success: true,
+        version: '1.0.1',
         data: []
     });
 });
