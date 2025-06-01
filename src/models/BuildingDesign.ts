@@ -69,11 +69,15 @@ const BuildingDesignSchema = new Schema<IBuildingDesign>(
     { timestamps: true }
 );
 
-// Compound index for city and isDeleted
-BuildingDesignSchema.index({ city: 1, isDeleted: 1 }, {
-    unique: true,
-    partialFilterExpression: { isDeleted: false },
-    collation: { locale: 'en', strength: 2 } // Case-insensitive
-});
+// 🔁 Enable case-insensitive filtering on city + status + isDeleted
+BuildingDesignSchema.index(
+    { city: 1, isDeleted: 1, status: 1 },
+    {
+        collation: { locale: 'en', strength: 2 } // case-insensitive
+    }
+);
+
+// 🔎 Index for quick filtering active/not-deleted records
+BuildingDesignSchema.index({ isDeleted: 1, isActive: 1 });
 
 export default mongoose.model<IBuildingDesign>('BuildingDesign', BuildingDesignSchema);

@@ -16,9 +16,12 @@ export const analyzeDesign = async (req: Request, res: Response) => {
 
 export const getCachedAnalysis = async (req: Request, res: Response) => {
     try {
-        const data = await redisClient.get(`analysis:${req.params.designId}`);
-        if (!data) return res.status(404).json({ error: 'No analysis found in cache.' });
-        handleSuccess(res, JSON.parse(data));
+        const key = `analysis:${req.params.designId}`;
+        const data = await redisClient.get(key);
+
+        const analysis = data ? JSON.parse(data) : null;
+        if (!analysis) return res.status(404).json({ error: 'No analysis found in cache.' });
+        handleSuccess(res, analysis);
     } catch (err) {
         handleError(res, err);
     }

@@ -1,27 +1,28 @@
-const solarRadiationData: Record<string, Record<string, number>> = {
-    Bangalore: { north: 150, south: 250, east: 200, west: 200, roof: 300 },
-    Mumbai: { north: 180, south: 350, east: 280, west: 270, roof: 400 },
-    Kolkata: { north: 200, south: 400, east: 300, west: 290, roof: 450 },
-    Delhi: { north: 160, south: 270, east: 220, west: 220, roof: 320 },
-};
-
-const electricityRates: Record<string, number> = {
-    Bangalore: 6.5,
-    Mumbai: 9.0,
-    Kolkata: 7.5,
-    Delhi: 8.5,
-};
+import logger from './logger';
 
 const COP = 4;
 
-export function calculateEnergyAnalysis(design: any) {
+export function calculateEnergyAnalysis(
+    design: any,
+    electricityRate: { rate: number },
+    solarRadiation: { radiation: Record<string, number> }
+) {
     const { facades, shgc, city, exposureHours, skylight } = design;
-    const radiation = solarRadiationData[city];
-    const rate = electricityRates[city];
+
+    const radiation = solarRadiation?.radiation;
+    const rate = electricityRate?.rate;
+
+    if (!radiation || typeof rate !== 'number') {
+        throw new Error('Radiation or electricity rate data missing');
+    }
+
     const result: Record<string, any> = {};
     let totalBTU = 0;
 
-    // Per-facade heat gain
+    logger.info(`🔋 Using electricity rate: ${rate}`);
+    logger.info(`🌞 Radiation for ${city}:`, radiation);
+
+    // 1. Facade-wise Q
     for (const direction of ['north', 'south', 'east', 'west']) {
         const facade = facades[direction];
         const area = facade.height * facade.width * facade.wwr;
@@ -30,14 +31,15 @@ export function calculateEnergyAnalysis(design: any) {
         totalBTU += Q;
     }
 
-    // Skylight
-    if (skylight?.height && skylight?.width) {
+    // 2. Skylight Q (if used — optional)
+    if (skylight?.height && skylight?.width && radiation.roof) {
         const area = skylight.height * skylight.width;
         const Q = area * shgc * radiation.roof * exposureHours;
         result['roof'] = { area, Q: parseFloat(Q.toFixed(2)) };
         totalBTU += Q;
     }
 
+    // 3. Final outputs
     const coolingLoad = totalBTU / 3412;
     const energyUsed = coolingLoad / COP;
     const cost = energyUsed * rate;
@@ -49,6 +51,6 @@ export function calculateEnergyAnalysis(design: any) {
         energyUsed: parseFloat(energyUsed.toFixed(2)),
         estimatedCost: parseFloat(cost.toFixed(2)),
         city,
-        timestamp: new Date(),
+        timestamp: new Date()
     };
 }

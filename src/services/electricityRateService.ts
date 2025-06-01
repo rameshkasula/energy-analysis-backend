@@ -32,7 +32,8 @@ export const getAllRates = async (skip?: number, limit?: number) => {
     }
 
     return {
-        rates: await query
+        rates: await query,
+        total: await ElectricityRate.countDocuments(filter)
     };
 };
 

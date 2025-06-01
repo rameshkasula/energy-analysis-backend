@@ -58,3 +58,15 @@ export const softDeleteDesign = async (req: Request, res: Response) => {
         handleError(res, err);
     }
 };
+
+// get design based on the city level
+export const getDesignByCity = async (req: Request, res: Response) => {
+    try {
+        // query params city
+        const city = req.query.city as string;
+        const result = await service.getDesignByCity(city);
+        handleSuccess(res, result);
+    } catch (err) {
+        handleError(res, err);
+    }
+};

@@ -60,10 +60,14 @@ const ElectricityRateSchema = new Schema({
     timestamps: true
 });
 
-// Case-insensitive index for city
-ElectricityRateSchema.index({ city: 1 }, {
-    unique: true,
-    collation: { locale: 'en', strength: 2 } // Case-insensitive
-});
+// partial index for soft delete for duplicate city
+ElectricityRateSchema.index(
+    { city: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { isDeleted: false },
+        collation: { locale: 'en', strength: 2 }
+    }
+);
 
 export default mongoose.model<IElectricityRate>('ElectricityRate', ElectricityRateSchema); 

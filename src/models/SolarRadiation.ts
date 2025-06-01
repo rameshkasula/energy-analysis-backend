@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISolarRadiation extends Document {
+    name: string;
     city: string;
     radiation: {
         north: number;
@@ -19,6 +20,13 @@ export interface ISolarRadiation extends Document {
 }
 
 const SolarRadiationSchema = new Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 1,
+        maxlength: 100,
+    },
     city: {
         type: String,
         required: true,
@@ -87,10 +95,13 @@ const SolarRadiationSchema = new Schema({
     timestamps: true
 });
 
-// Case-insensitive index for city
-SolarRadiationSchema.index({ city: 1 }, {
-    unique: true,
-    collation: { locale: 'en', strength: 2 } // Case-insensitive
-});
+SolarRadiationSchema.index(
+    { city: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { isDeleted: false },
+        collation: { locale: 'en', strength: 2 }
+    }
+);
 
 export default mongoose.model<ISolarRadiation>('SolarRadiation', SolarRadiationSchema); 

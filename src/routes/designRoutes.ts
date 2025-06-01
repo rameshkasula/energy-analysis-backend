@@ -5,6 +5,7 @@ import * as controller from '../controllers/designController';
 const router = express.Router();
 
 router.get('/', controller.getAllDesigns);
+router.get('/stats', controller.getDesignByCity); // get city wise design count / stats
 router.post('/', controller.createDesign);
 router.get('/:id', controller.getDesignById);
 router.put('/:id', controller.updateDesign);

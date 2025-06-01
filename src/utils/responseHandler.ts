@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { handleError as handleAppError } from './errorHandler';
 
 export const handleSuccess = (res: Response, data: any, statusCode: number = 200) => {
     res.status(statusCode).json({
@@ -7,14 +8,8 @@ export const handleSuccess = (res: Response, data: any, statusCode: number = 200
     });
 };
 
-export const handleError = (res: Response, error: any, statusCode: number = 500) => {
-    res.status(statusCode).json({
-        success: false,
-        error: {
-            message: error.message || 'Internal server error',
-            ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-        }
-    });
+export const handleError = (res: Response, error: any) => {
+    handleAppError(res, error);
 };
 
 export const handlePagination = (res: Response, data: any[], total: number, page: number, limit: number) => {
