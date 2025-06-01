@@ -1,6 +1,277 @@
 # Energy Analysis Backend
 
-A backend service for analyzing building designs and managing energy-related data.
+A backend service for managing building designs, electricity rates, and solar radiation data for energy analysis.
+
+## Features
+
+### Building Designs
+- Create, read, update, and delete building designs
+- Track design status (DRAFT, REVIEW, FINALIZED)
+- City-wise design management
+- Soft delete functionality
+- Design statistics by city and status
+
+### Electricity Rates
+- Manage city-specific electricity rates
+- Track rate status (DRAFT, REVIEW, FINALIZED)
+- Soft delete functionality
+- Rate history tracking
+
+### Solar Radiation
+- City-specific solar radiation data
+- Track radiation status (DRAFT, REVIEW, FINALIZED)
+- Soft delete functionality
+
+## API Endpoints
+
+### Building Designs
+
+#### Get All Designs
+```http
+GET /designs
+Query Parameters:
+- skip: number (optional)
+- limit: number (optional)
+```
+
+#### Get Design Statistics
+```http
+GET /designs/stats
+Query Parameters:
+- city: string (optional, comma-separated for multiple cities)
+Response:
+{
+  "success": true,
+  "data": {
+    "totalDesigns": number,
+    "cityStats": [
+      {
+        "city": string,
+        "totalCityDesigns": number,
+        "statusCounts": [
+          {
+            "status": string,
+            "count": number
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Create Design
+```http
+POST /designs
+Body:
+{
+  "name": string,
+  "city": string,
+  "facades": {
+    "north": number,
+    "south": number,
+    "east": number,
+    "west": number
+  },
+  "shgc": number,
+  "exposureHours": number,
+  "skylight": number (optional),
+  "status": "DRAFT" | "REVIEW" | "FINALIZED" | "REJECTED",
+  "notes": string (optional)
+}
+```
+
+#### Get Design by ID
+```http
+GET /designs/:id
+```
+
+#### Update Design
+```http
+PUT /designs/:id
+Body: Same as Create Design
+```
+
+#### Update Design Status
+```http
+PATCH /designs/:id/status
+Body:
+{
+  "status": "DRAFT" | "REVIEW" | "FINALIZED" | "REJECTED"
+}
+```
+
+#### Soft Delete Design
+```http
+DELETE /designs/:id
+```
+
+### Electricity Rates
+
+#### Get All Rates
+```http
+GET /rates
+Query Parameters:
+- skip: number (optional)
+- limit: number (optional)
+```
+
+#### Create Rate
+```http
+POST /rates
+Body:
+{
+  "city": string,
+  "rate": number,
+  "status": "DRAFT" | "REVIEW" | "FINALIZED",
+  "notes": string (optional)
+}
+```
+
+#### Get Rate by ID
+```http
+GET /rates/:id
+```
+
+#### Update Rate
+```http
+PUT /rates/:id
+Body: Same as Create Rate
+```
+
+#### Update Rate Status
+```http
+PATCH /rates/:id/status
+Body:
+{
+  "status": "DRAFT" | "REVIEW" | "FINALIZED"
+}
+```
+
+#### Soft Delete Rate
+```http
+DELETE /rates/:id
+```
+
+#### Get Deleted Rates
+```http
+GET /rates/deleted
+```
+
+#### Restore Rate
+```http
+PATCH /rates/:id/restore
+```
+
+### Solar Radiation
+
+#### Get All Radiation Data
+```http
+GET /radiation
+Query Parameters:
+- skip: number (optional)
+- limit: number (optional)
+```
+
+#### Create Radiation Data
+```http
+POST /radiation
+Body:
+{
+  "city": string,
+  "radiation": {
+    "north": number,
+    "south": number,
+    "east": number,
+    "west": number
+  },
+  "status": "DRAFT" | "REVIEW" | "FINALIZED",
+  "notes": string (optional)
+}
+```
+
+#### Get Radiation by ID
+```http
+GET /radiation/:id
+```
+
+#### Update Radiation
+```http
+PUT /radiation/:id
+Body: Same as Create Radiation
+```
+
+#### Update Radiation Status
+```http
+PATCH /radiation/:id/status
+Body:
+{
+  "status": "DRAFT" | "REVIEW" | "FINALIZED"
+}
+```
+
+#### Soft Delete Radiation
+```http
+DELETE /radiation/:id
+```
+
+## Error Handling
+
+The API uses a consistent error response format:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": string,
+    "message": string
+  }
+}
+```
+
+Common error codes:
+- `DUPLICATE_RECORD`: When trying to create a duplicate record
+- `NOT_FOUND`: When the requested resource is not found
+- `VALIDATION_ERROR`: When input data is invalid
+- `UNAUTHORIZED`: When authentication is required
+- `FORBIDDEN`: When access is forbidden
+- `INTERNAL_ERROR`: For unexpected server errors
+
+## Status Management
+
+All resources (Designs, Rates, Radiation) support the following statuses:
+- `DRAFT`: Initial state, when the record is first created
+- `REVIEW`: Under review by authorized personnel
+- `FINALIZED`: Approved and finalized, ready for use
+- `REJECTED`: Rejected during review, requires revision
+
+Status Flow:
+```
+DRAFT → REVIEW → FINALIZED
+        ↓
+     REJECTED → DRAFT
+```
+
+Status Rules:
+- New records are created with `DRAFT` status
+- Only `DRAFT` records can be moved to `REVIEW`
+- `REVIEW` records can be moved to either `FINALIZED` or `REJECTED`
+- `REJECTED` records must be updated and moved back to `DRAFT`
+- `FINALIZED` records cannot be modified
+
+## Soft Delete
+
+All resources support soft delete functionality:
+- Records are marked as deleted but not removed from the database
+- Deleted records can be restored
+- Only non-deleted records are returned in regular queries
+
+## City Management
+
+- City names are case-insensitive
+- City names are automatically normalized (trimmed and title-cased)
+- Multiple cities can be queried using comma-separated values
+- City-specific statistics are available for all resources
 
 ## Prerequisites
 
@@ -375,25 +646,6 @@ PUT /api/solar-radiation/:id
 ```http
 DELETE /api/solar-radiation/:id
 ```
-
-## Error Handling
-
-The API uses standard HTTP status codes and returns error responses in the following format:
-
-```json
-{
-    "error": "Error message",
-    "status": 400
-}
-```
-
-Common status codes:
-- 200: Success
-- 201: Created
-- 204: No Content
-- 400: Bad Request
-- 404: Not Found
-- 500: Internal Server Error
 
 ## Development
 
